@@ -73,7 +73,7 @@ namespace SampleProjMoex
         {
             try
             {
-                var date1 = calendar.SelectedDates.FirstOrDefault();
+                 var date1 = calendar.SelectedDates.FirstOrDefault();
                 var date2 = calendar.SelectedDates.LastOrDefault();
                 string dateInFormatFirst;
                 string dateInFormatSecond;
@@ -88,7 +88,25 @@ namespace SampleProjMoex
                     dateInFormatSecond = date2.ToString("yyyy-MM-dd");
                 }
                 var request = WebRequest.Create("https://iss.moex.com/iss/analyticalproducts/futoi/securities/" +(list.SelectedItem as ListBoxItem).Content.ToString() +".json?from=" + dateInFormatFirst + "&till=" + dateInFormatSecond) as HttpWebRequest;
-                request.Credentials = new NetworkCredential("iyushirokov@gmail.com", "871117");
+                HttpStatusCode last_status;
+                string last_status_text = null;
+                CookieContainer cookiejar = new CookieContainer();
+                var AuthReq = WebRequest.Create("https://passport.moex.com/authenticate") as HttpWebRequest;
+                AuthReq.CookieContainer = new CookieContainer();
+                HttpWebResponse AuthResponse;
+                // use the Basic authorization mechanism
+                byte[] binData;
+                binData = System.Text.Encoding.UTF8.GetBytes("iyushirokov@gmail.com" + ":" + "871117");
+                string sAuth64 = Convert.ToBase64String(binData, System.Base64FormattingOptions.None);
+                AuthReq.Headers.Add(HttpRequestHeader.Authorization, "Basic " + sAuth64);
+
+                AuthResponse = (HttpWebResponse)AuthReq.GetResponse();
+                AuthResponse.Close();
+                last_status = AuthResponse.StatusCode;
+
+                cookiejar = new CookieContainer();
+                cookiejar.Add(AuthResponse.Cookies);
+                request.CookieContainer = cookiejar;
                 var response = request.GetResponse();
                 Stream receiveStream = response.GetResponseStream();
                 StreamReader readStream = new StreamReader(receiveStream, Encoding.UTF8);
